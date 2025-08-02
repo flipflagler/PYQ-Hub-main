@@ -686,6 +686,78 @@
         </div>
       </div>
 
+      <!-- Search Section -->
+      <div class="section-card" style="margin-bottom: 20px;">
+        <div class="section-header">
+          <h3 class="section-title">Search PYQs</h3>
+        </div>
+        <div class="section-content">
+          <form id="searchForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="searchCollege">College</label>
+              <select id="searchCollege" name="college" class="form-input form-select">
+                <option value="">All Colleges</option>
+                <option value="IIT Delhi">IIT Delhi</option>
+                <option value="IIT Bombay">IIT Bombay</option>
+                <option value="IIT Madras">IIT Madras</option>
+                <option value="IIT Kanpur">IIT Kanpur</option>
+                <option value="IIT Kharagpur">IIT Kharagpur</option>
+                <option value="NIT Trichy">NIT Trichy</option>
+                <option value="NIT Surathkal">NIT Surathkal</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="searchSubject">Subject</label>
+              <input type="text" id="searchSubject" name="subject" class="form-input" placeholder="e.g., Physics">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="searchYear">Year</label>
+              <select id="searchYear" name="year" class="form-input form-select">
+                <option value="">All Years</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2021">2021</option>
+                <option value="2020">2020</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="searchSemester">Semester</label>
+              <select id="searchSemester" name="semester" class="form-input form-select">
+                <option value="">All Semesters</option>
+                <option value="1">1st Semester</option>
+                <option value="2">2nd Semester</option>
+                <option value="3">3rd Semester</option>
+                <option value="4">4th Semester</option>
+                <option value="5">5th Semester</option>
+                <option value="6">6th Semester</option>
+                <option value="7">7th Semester</option>
+                <option value="8">8th Semester</option>
+              </select>
+            </div>
+            
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <button type="submit" class="btn-upload" style="width: 100%;">🔍 Search PYQs</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Search Results -->
+      <div class="section-card" style="margin-bottom: 20px;">
+        <div class="section-header">
+          <h3 class="section-title">Search Results</h3>
+        </div>
+        <div class="section-content">
+          <div id="searchResults">
+            <p style="text-align: center; color: #64748b;">Search for PYQs to see results here</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Content Sections -->
       <div class="content-sections">
         <!-- Recent Uploads -->
@@ -904,6 +976,7 @@
 
    <script src="script.js"></script>
    <script type="module" src="firebase-upload.js"></script>
+   <script type="module" src="search.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       // Dark mode toggle functionality

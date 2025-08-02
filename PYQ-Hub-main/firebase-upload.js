@@ -1,23 +1,22 @@
 // Import Firebase functions from CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import { uploadToCloudinary } from './cloudinary-config.js';
 
 // Your Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyClrHzNNcLGV8YgSseR41e18w_rRHxXQtg",
-  authDomain: "pyq-d7579.firebaseapp.com",
-  projectId: "pyq-d7579",
-  storageBucket: "pyq-d7579.firebasestorage.app",
-  messagingSenderId: "440851411467",
-  appId: "1:440851411467:web:ad812e46faa5edaf9d4d0e",
-  measurementId: "G-RXNZRYP6NM"
+  apiKey: "AIzaSyAqnBAa5Y0JEbuFohgn6jS9gWvl3JGWors",
+  authDomain: "pyq-hub-fb3bb.firebaseapp.com",
+  projectId: "pyq-hub-fb3bb",
+  storageBucket: "pyq-hub-fb3bb.firebasestorage.app",
+  messagingSenderId: "5765004016",
+  appId: "1:5765004016:web:fb7b745a6b64f27ada6035",
+  measurementId: "G-VGRQNKZD0P"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
@@ -122,14 +121,17 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleUpload(e) {
   e.preventDefault();
 
+  console.log('Upload form submitted');
+
   // Check if user is authenticated
   if (!currentUser) {
     alert('Please log in to upload files');
     return;
   }
 
+  console.log('User authenticated:', currentUser.email);
+
   // Get form data
-  const formData = new FormData(e.target);
   const title = document.getElementById('title').value;
   const description = document.getElementById('description').value;
   const college = document.getElementById('college').value;
@@ -140,9 +142,17 @@ async function handleUpload(e) {
   const examType = document.getElementById('examType').value;
   const file = document.getElementById('fileInput').files[0];
 
+  console.log('Form data:', {
+    title, description, college, course, subject, year, semester, examType,
+    fileName: file?.name,
+    fileSize: file?.size,
+    fileType: file?.type
+  });
+
   // Validate required fields
   if (!title || !college || !course || !subject || !year || !semester || !examType || !file) {
     alert('Please fill in all required fields');
+    console.log('Validation failed - missing required fields');
     return;
   }
 
@@ -156,10 +166,12 @@ async function handleUpload(e) {
   uploadLoading.style.display = 'flex';
 
   try {
-    // Upload file to Firebase Storage
-    const storageRef = ref(storage, `pyqs/${currentUser.uid}/${Date.now()}_${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
+    console.log('Starting Cloudinary upload...');
+    
+    // Upload file to Cloudinary
+    const cloudinaryResult = await uploadToCloudinary(file);
+    
+    console.log('Cloudinary upload successful:', cloudinaryResult);
 
     // Store metadata in Firestore
     const pyqData = {
@@ -174,8 +186,8 @@ async function handleUpload(e) {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
-      downloadURL: downloadURL,
-      storageRef: snapshot.ref.fullPath,
+      fileUrl: cloudinaryResult.url,
+      publicId: cloudinaryResult.publicId,
       uploadedBy: currentUser.uid,
       uploadedByEmail: currentUser.email,
       uploadDate: serverTimestamp(),
@@ -183,6 +195,8 @@ async function handleUpload(e) {
       likes: 0,
       status: 'pending' // pending, approved, rejected
     };
+
+    console.log('Saving to Firestore:', pyqData);
 
     const docRef = await addDoc(collection(db, 'pyqs'), pyqData);
     
@@ -196,12 +210,76 @@ async function handleUpload(e) {
     
   } catch (error) {
     console.error('Upload error:', error);
-    alert('Upload failed: ' + error.message);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
+    let errorMessage = 'Upload failed: ';
+    
+    if (error.message.includes('File size')) {
+      errorMessage += 'File is too large. Maximum size is 10MB.';
+    } else if (error.message.includes('File type')) {
+      errorMessage += 'Invalid file type. Please use PDF, JPG, or PNG files.';
+    } else if (error.message.includes('Upload failed: 400')) {
+      errorMessage += 'Invalid upload preset. Please check Cloudinary configuration.';
+    } else if (error.message.includes('Upload failed: 401')) {
+      errorMessage += 'Unauthorized. Please check Cloudinary credentials.';
+    } else if (error.message.includes('Upload failed: 413')) {
+      errorMessage += 'File is too large for Cloudinary.';
+    } else {
+      errorMessage += error.message;
+    }
+    
+    alert(errorMessage);
   } finally {
     // Reset loading state
     uploadBtn.disabled = false;
     uploadText.style.display = 'block';
     uploadLoading.style.display = 'none';
+  }
+}
+
+// Search function
+async function searchPYQs(filters = {}) {
+  try {
+    let q = collection(db, 'pyqs');
+    
+    // Apply filters
+    if (filters.college) {
+      q = query(q, where('college', '==', filters.college));
+    }
+    if (filters.subject) {
+      q = query(q, where('subject', '==', filters.subject));
+    }
+    if (filters.year) {
+      q = query(q, where('year', '==', parseInt(filters.year)));
+    }
+    if (filters.semester) {
+      q = query(q, where('semester', '==', parseInt(filters.semester)));
+    }
+    if (filters.course) {
+      q = query(q, where('course', '==', filters.course));
+    }
+    
+    // Order by upload date
+    q = query(q, orderBy('uploadDate', 'desc'));
+    
+    const querySnapshot = await getDocs(q);
+    const results = [];
+    
+    querySnapshot.forEach((doc) => {
+      results.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    return results;
+  } catch (error) {
+    console.error('Search error:', error);
+    throw error;
   }
 }
 
@@ -226,4 +304,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeUploadModal();
   }
-}); 
+});
+
+// Export functions for use in other files
+window.searchPYQs = searchPYQs; 
