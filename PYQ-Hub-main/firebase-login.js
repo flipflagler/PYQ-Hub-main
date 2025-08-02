@@ -5,16 +5,16 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } f
 
 // Your Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyClrHzNNcLGV8YgSseR41e18w_rRHxXQtg",
-  authDomain: "pyq-d7579.firebaseapp.com",
-  projectId: "pyq-d7579",
-  storageBucket: "pyq-d7579.firebasestorage.app",
-  messagingSenderId: "440851411467",
-  appId: "1:440851411467:web:ad812e46faa5edaf9d4d0e",
-  measurementId: "G-RXNZRYP6NM"
+  apiKey: "AIzaSyAqnBAa5Y0JEbuFohgn6jS9gWvl3JGWors",
+  authDomain: "pyq-hub-fb3bb.firebaseapp.com",
+  projectId: "pyq-hub-fb3bb",
+  storageBucket: "pyq-hub-fb3bb.firebasestorage.app",
+  messagingSenderId: "5765004016",
+  appId: "1:5765004016:web:fb7b745a6b64f27ada6035",
+  measurementId: "G-VGRQNKZD0P"
 };
 
-// Initialize Firebase
+// Initialize Firebasex
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
